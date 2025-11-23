@@ -6,10 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.studymate.db.dao.UserDAO
 import com.example.studymate.ui.screens.*
 
 @Composable
-fun NavGraph(startDestination: String = "splash") {
+fun NavGraph(
+    startDestination: String = "splash",
+    userDao: UserDAO
+) {
 
     val navController = rememberNavController()
     val duration = 320
@@ -85,7 +89,10 @@ fun NavGraph(startDestination: String = "splash") {
             popEnterTransition = { popEnterTransition() },
             popExitTransition = { popExitTransition() }
         ) {
-            HomeScreen(navController)
+            HomeScreen(
+                navController = navController,
+                userDao = userDao
+            )
         }
 
         composable("timer") { TimerScreen() }

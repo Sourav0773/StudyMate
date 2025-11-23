@@ -7,11 +7,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,21 +23,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.studymate.db.dao.UserDAO
 import com.example.studymate.ui.theme.AppBackground
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    userDao: UserDAO
+) {
+
+    val scope = rememberCoroutineScope()
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("StudyMate") },
+                title = { Text("Home") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White
                 ),
-                modifier = Modifier.shadow(8.dp)
+                modifier = Modifier.shadow(8.dp),
+
+                // ----------- LOGOUT ICON HERE ------------
+                actions = {
+                    IconButton(onClick = { showLogoutDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.PowerSettingsNew,
+                            contentDescription = "Logout",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -120,6 +141,36 @@ fun HomeScreen(navController: NavController) {
                 }
             }
         }
+    }
+
+    // ----------------- LOGOUT CONFIRMATION DIALOG -----------------
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+
+            title = { Text("Confirm Logout!") },
+            text = { Text("Are you sure you want to log out?") },
+
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    scope.launch {
+                        userDao.clearUser()
+                        navController.navigate("login") {
+                            popUpTo(0)
+                        }
+                    }
+                }) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        )
     }
 }
 

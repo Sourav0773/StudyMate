@@ -13,25 +13,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
+import com.example.studymate.db.modules.DatabaseModule
 import com.example.studymate.ui.theme.AppBackground
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(navController: NavController) {
 
-    // Navigation delay
-    LaunchedEffect(Unit) {
-        delay(2200)
-        navController.navigate("login") {
-            popUpTo("splash") { inclusive = true }
+    val context = LocalContext.current
+    val db = remember { DatabaseModule.getDb(context) }
+    val scope = rememberCoroutineScope()
+
+    // Run auto login logic
+    LaunchedEffect(true) {
+        delay(1800)
+
+        val user = db.userDao().getUser()
+
+        if (user != null) {
+            // Auto-login
+            navController.navigate("home") {
+                popUpTo("splash") { inclusive = true }
+            }
+        } else {
+            // Go to login
+            navController.navigate("login") {
+                popUpTo("splash") { inclusive = true }
+            }
         }
     }
 
-    // Trigger animations
+    // Animation
     var start by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { start = true }
 
@@ -45,7 +63,6 @@ fun SplashScreen(navController: NavController) {
         animationSpec = tween(1000)
     )
 
-    // Background wrapper
     AppBackground {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -53,7 +70,6 @@ fun SplashScreen(navController: NavController) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                // Animated Material3 Icon
                 Icon(
                     imageVector = Icons.Default.School,
                     contentDescription = "Study Icon",

@@ -11,12 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.studymate.firebase.AuthViewModel
+import com.example.studymate.db.entity.UserEntity
+import com.example.studymate.db.modules.DatabaseModule
 import com.example.studymate.ui.theme.AppBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,11 +37,13 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    val context = LocalContext.current
+    val db = remember { DatabaseModule.getDb(context) }
+
     // UI Colors
-    val cardBackground = Color(0xFFF4EDFF)
+    val buttonColor = Color(0xFF6A5AE0)
     val titleColor = Color(0xFF2D2A45)
     val subtitleColor = Color(0xFF7A78A1)
-    val buttonColor = Color(0xFF6A5AE0)
 
     AppBackground {
         Scaffold(
@@ -64,37 +69,25 @@ fun LoginScreen(
                 ) {
 
                     Column(
-                        modifier = Modifier
-                            .padding(32.dp)
-                            .fillMaxWidth(),
+                        modifier = Modifier.padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
-                        // Title
                         Text(
                             "Welcome Back 📚",
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             color = titleColor
                         )
-
                         Spacer(Modifier.height(6.dp))
-
-                        Text(
-                            "Log in to StudyMate",
-                            fontSize = 16.sp,
-                            color = subtitleColor
-                        )
-
+                        Text("Log in to StudyMate", fontSize = 16.sp, color = subtitleColor)
                         Spacer(Modifier.height(30.dp))
 
-                        // Email
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
                             label = { Text("Email") },
                             singleLine = true,
-                            enabled = !loading,
                             leadingIcon = { Icon(Icons.Default.Person, null) },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = buttonColor,
@@ -105,13 +98,11 @@ fun LoginScreen(
 
                         Spacer(Modifier.height(18.dp))
 
-                        // Password
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
                             label = { Text("Password") },
                             singleLine = true,
-                            enabled = !loading,
                             visualTransformation = PasswordVisualTransformation(),
                             leadingIcon = { Icon(Icons.Default.Lock, null) },
                             colors = OutlinedTextFieldDefaults.colors(
@@ -123,10 +114,8 @@ fun LoginScreen(
 
                         Spacer(Modifier.height(32.dp))
 
-                        // Login Button
                         Button(
                             onClick = {
-
                                 if (email.isBlank() || password.isBlank()) {
                                     scope.launch {
                                         snackbarHostState.showSnackbar("Enter email & password")
@@ -142,13 +131,18 @@ fun LoginScreen(
                                     onSuccess = {
                                         scope.launch {
 
+
+                                            db.userDao().saveUser(
+                                                UserEntity(email = email)
+                                            )
+
                                             navController.navigate("home") {
                                                 popUpTo("login") { inclusive = true }
                                                 launchSingleTop = true
                                             }
 
                                             snackbarHostState.showSnackbar("Successfully Logged In!")
-                                            delay(200) // smooth transition
+                                            delay(200)
                                             loading = false
                                         }
                                     },
@@ -161,11 +155,11 @@ fun LoginScreen(
                                 )
 
                             },
+                            enabled = !loading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(55.dp),
                             shape = RoundedCornerShape(14.dp),
-                            enabled = !loading,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = buttonColor,
                                 contentColor = Color.White
@@ -184,7 +178,6 @@ fun LoginScreen(
 
                         Spacer(Modifier.height(18.dp))
 
-                        // Signup
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Don't have an account? ", color = subtitleColor)
 
@@ -192,14 +185,9 @@ fun LoginScreen(
                                 onClick = { navController.navigate("signup") },
                                 enabled = !loading
                             ) {
-                                Text(
-                                    "Sign Up",
-                                    color = buttonColor,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text("Sign Up", color = buttonColor, fontWeight = FontWeight.Bold)
                             }
                         }
-
                     }
                 }
             }
